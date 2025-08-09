@@ -1,0 +1,29 @@
+# Environment files
+.env
+.env.*
+!.env.sample
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Node.js (if using React templates)
+node_modules/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Helm
+chart/*.tgz
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs
+*.log
