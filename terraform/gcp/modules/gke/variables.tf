@@ -1,0 +1,9 @@
+variable "project_id" { type = string }
+variable "region" { type = string }
+variable "cluster_name" { type = string }
+variable "network" { type = string }
+variable "subnet" { type = string }
+variable "min_nodes" { default = 1 }
+variable "max_nodes" { default = 3 }
+variable "machine_type" { default = "e2-standard-2" }
+variable "spot_nodes" { default = true }
