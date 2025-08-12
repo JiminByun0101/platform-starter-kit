@@ -1,0 +1,13 @@
+global:
+  image:
+    tag: v3.0.12  # Pin Argo CD app version for reproducibility
+
+server:
+  service:
+    type: ClusterIP  # Avoid external LB cost until Post 4
+  ingress:
+    enabled: false
+
+configs:
+  params:
+    server.insecure: true  # For local/dev use only
