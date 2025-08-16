@@ -1,3 +1,5 @@
+SHELL := /usr/bin/env bash
+
 # Default environment (override: make ENV=staging plan)
 ENV ?= dev
 
@@ -9,7 +11,7 @@ endif
 
 TF_DIR=terraform/gcp/envs/$(ENV)
 
-.PHONY: help init fmt validate plan apply destroy kubeconfig apis whoami tfstate
+.PHONY: help init fmt validate plan apply destroy kubeconfig apis whoami tfstate issuer-apply
 
 help: ## Show targets
 	@echo "ENV=$(ENV)"
@@ -51,3 +53,27 @@ destroy: ## Terraform destroy (careful!)
 
 kubeconfig: ## Fetch kubeconfig for the current env cluster
 	gcloud container clusters get-credentials $(CLUSTER_NAME) --region $(REGION) --project $(PROJECT_ID)
+
+issuer-apply: ## Apply ClusterIssuer (env-rendered)
+	@set -a && source .env.$(ENV) && \
+	envsubst < argocd/cert-manager-clusterissuer.yaml | kubectl apply -f -
+
+ARGOCD_OVERLAY := .rendered/argocd-values.$(ENV).yaml
+
+render-argocd: ## Render Argo CD overlay from env
+	@mkdir -p .rendered
+	# Only substitute the vars we expect; leave $oidc.* untouched
+	set -a && . .env.$(ENV) && \
+	envsubst '$${ARGOCD_HOST} $${GOOGLE_OAUTH_CLIENT_ID} $${GOOGLE_OAUTH_CLIENT_SECRET} $${ARGOCD_ADMIN_EMAIL}' \
+		< helm/argocd/values.ingress-sso.tmpl.yaml > $(ARGOCD_OVERLAY)
+	@echo "Rendered: $(ARGOCD_OVERLAY)"
+
+argocd-upgrade: render-argocd ## Upgrade Argo CD with ingress/SSO overlay
+	helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
+	helm repo update
+	helm upgrade --install argocd argo/argo-cd \
+		--namespace argocd \
+		--create-namespace \
+		--version 8.2.7 \
+		-f helm/argocd/values.yaml \
+		-f $(ARGOCD_OVERLAY)

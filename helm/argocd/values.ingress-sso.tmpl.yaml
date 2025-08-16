@@ -1,0 +1,33 @@
+server:
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: ${ARGOCD_HOST}
+    tls: true
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+
+configs:
+  cm:
+    url: https://${ARGOCD_HOST}
+    oidc.config: |
+      name: Google
+      issuer: https://accounts.google.com
+      clientID: ${GOOGLE_OAUTH_CLIENT_ID}
+      clientSecret: $oidc.google.clientSecret
+      requestedScopes: ["openid", "profile", "email"]
+
+  secret:
+    extra:
+      oidc.google.clientSecret: ${GOOGLE_OAUTH_CLIENT_SECRET}
+
+  # Example RBAC: grant admin to a specific email; adjust to your needs
+  rbac:
+    policy.csv: |
+      g, user:${ARGOCD_ADMIN_EMAIL}, role:admin
+    scopes: "[email]"

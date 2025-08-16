@@ -27,3 +27,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Rendered files (contain secrets)
+.rendered/
+*.rendered.yaml
